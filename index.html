@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Verbe Studio - Aprende y Práctica Verbos en Francés</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        french: {
+                            50: '#f4f7fb',
+                            100: '#e5edfb',
+                            200: '#cedef8',
+                            300: '#a7c4f3',
+                            400: '#79a2eb',
+                            500: '#5680e2',
+                            600: '#3f63d4',
+                            700: '#334ec3',
+                            800: '#2e419f',
+                            900: '#2a3a7e',
+                        },
+                        roseish: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .mic-pulse {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-french-600 via-indigo-500 to-roseish-400 flex items-center justify-center text-white shadow-md shadow-french-200">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="font-serif text-xl font-bold tracking-tight bg-gradient-to-r from-french-800 to-indigo-600 bg-clip-text text-transparent">Mon Verbe Studio</span>
+                        <span class="hidden sm:inline-block text-xs text-slate-400 ml-2 font-medium">Français Élégant</span>
+                    </div>
+                </div>
+
+                <!-- Global Quick Stats Header -->
+                <div class="flex items-center space-x-4 sm:space-x-6">
+                    <div class="flex items-center space-x-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-amber-200/60">
+                        <i data-lucide="flame" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
+                        <span id="streak-counter">0</span>
+                        <span class="hidden sm:inline text-amber-600/80 font-normal">días</span>
+                    </div>
+
+                    <div class="flex items-center space-x-1.5 bg-french-50 text-french-700 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-french-200/60">
+                        <i data-lucide="trophy" class="w-4 h-4 text-french-500"></i>
+                        <span id="score-counter">0</span>
+                        <span class="hidden sm:inline text-french-600/80 font-normal">pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+        <!-- Navigation Tabs -->
+        <div class="flex overflow-x-auto space-x-1 border-b border-slate-200 mb-6 pb-1 no-scrollbar">
+            <button onclick="switchTab('write')" id="tab-write" class="tab-btn active flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all whitespace-nowrap text-french-600 bg-french-50 border border-french-100 shadow-sm">
+                <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                <span>Escritura</span>
+            </button>
+
+            <button onclick="switchTab('speak')" id="tab-speak" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all whitespace-nowrap">
+                <i data-lucide="mic" class="w-4 h-4"></i>
+                <span>Pronunciación</span>
+            </button>
+
+            <button onclick="switchTab('manage')" id="tab-manage" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all whitespace-nowrap">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span>Mis Verbos</span>
+                <span id="verb-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full ml-1">0</span>
+            </button>
+
+            <button onclick="switchTab('import')" id="tab-import" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all whitespace-nowrap">
+                <i data-lucide="file-up" class="w-4 h-4"></i>
+                <span>Importar / Exportar</span>
+            </button>
+
+            <button onclick="switchTab('stats')" id="tab-stats" class="tab-btn flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all whitespace-nowrap">
+                <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                <span>Estadísticas</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: ESCRITURA -->
+        <section id="content-write" class="tab-content flex-1 flex flex-col">
+            <div class="max-w-3xl w-full mx-auto my-auto py-4">
+                <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full mb-8 overflow-hidden">
+                        <div id="write-progress-bar" class="bg-gradient-to-r from-french-500 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <span id="write-tense-tag" class="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-full uppercase tracking-wider mb-2">Présent</span>
+                        <h2 id="write-prompt-es" class="font-serif text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight min-h-[48px] flex items-center justify-center">
+                            Cargando...
+                        </h2>
+                        <p id="write-prompt-hint" class="text-xs text-slate-400 mt-1 italic">Escribe la respuesta en francés</p>
+                    </div>
+
+                    <form id="write-form" onsubmit="handleWriteSubmit(event)" class="space-y-4">
+                        <div class="relative">
+                            <input type="text" id="write-input" autocomplete="off" spellcheck="false" placeholder="Escribe aquí en francés..." class="w-full px-5 py-4 text-lg sm:text-xl rounded-2xl border-2 border-slate-200 focus:border-french-500 focus:ring-4 focus:ring-french-100 outline-none transition-all pr-12 font-medium text-slate-800 placeholder:text-slate-300">
+                            <button type="button" onclick="speakText(document.getElementById('write-input').value || currentWriteItem?.target)" class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-french-600 rounded-xl hover:bg-slate-100 transition-colors" title="Escuchar">
+                                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Special French Characters Toolbar -->
+                        <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1">
+                            <span class="text-xs text-slate-400 mr-1 hidden sm:inline">Acentos rápidos:</span>
+                            <template id="accent-btn-template">
+                                <button type="button" class="px-2.5 py-1.5 bg-slate-100 hover:bg-french-100 hover:text-french-700 text-slate-700 font-medium text-sm rounded-lg transition-colors border border-slate-200/80 active:scale-95"></button>
+                            </template>
+                            <div id="accent-bar" class="flex flex-wrap gap-1"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center space-x-3 pt-4">
+                            <button type="button" onclick="skipWriteItem()" class="px-5 py-3 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium text-sm transition-all flex items-center space-x-1">
+                                <span>Saltar</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                            <button type="submit" id="write-submit-btn" class="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-french-600 to-indigo-600 hover:from-french-700 hover:to-indigo-700 text-white font-semibold text-base shadow-lg shadow-french-200 transition-all transform active:scale-[0.99] flex items-center justify-center space-x-2">
+                                <span>Comprobar</span>
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Feedback Banner -->
+                    <div id="write-feedback" class="hidden mt-6 p-4 rounded-2xl border transition-all animate-fade-in">
+                        <div class="flex items-start space-x-3">
+                            <div id="write-feedback-icon" class="p-2 rounded-xl text-white mt-0.5"></div>
+                            <div class="flex-1">
+                                <h4 id="write-feedback-title" class="font-bold text-sm"></h4>
+                                <p id="write-feedback-msg" class="text-sm mt-0.5"></p>
+                                <div id="write-feedback-correct" class="text-xs font-mono mt-2 p-2 bg-white/80 rounded-lg border hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: PRONUNCIACIÓN -->
+        <section id="content-speak" class="tab-content hidden flex-1 flex flex-col">
+            <div class="max-w-3xl w-full mx-auto my-auto py-4">
+                <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 text-center relative overflow-hidden">
+                    <div class="bg-gradient-to-b from-french-50/50 to-indigo-50/30 rounded-2xl p-6 mb-8 border border-french-100">
+                        <span id="speak-tense-tag" class="inline-block px-3 py-1 bg-white text-french-600 text-xs font-semibold rounded-full uppercase tracking-wider border border-french-100 mb-3">Pronunciación</span>
+                        <h2 id="speak-target-text" class="font-serif text-3xl sm:text-4xl font-bold text-slate-800 mb-2">Je parle</h2>
+                        <p id="speak-translation" class="text-slate-500 text-sm sm:text-base font-medium mb-4">Yo hablo</p>
+
+                        <button onclick="listenNativeSpeak()" class="inline-flex items-center space-x-2 px-4 py-2 bg-white hover:bg-french-50 text-french-700 text-sm font-semibold rounded-full border border-french-200 shadow-sm transition-all transform hover:scale-105 active:scale-95">
+                            <i data-lucide="volume-2" class="w-4 h-4 text-french-600"></i>
+                            <span>Escuchar Nativo</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center my-6">
+                        <button id="mic-button" onclick="toggleSpeechRecognition()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-roseish-500 to-rose-400 text-white flex items-center justify-center shadow-xl shadow-roseish-100 hover:scale-105 transition-all cursor-pointer relative active:scale-95">
+                            <i data-lucide="mic" id="mic-icon" class="w-10 h-10"></i>
+                        </button>
+                        <p id="mic-status" class="text-sm font-medium text-slate-500 mt-4">Haz clic en el micrófono para hablar</p>
+                    </div>
+
+                    <div id="speak-result-box" class="min-h-[70px] flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80 mb-6">
+                        <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Lo que hemos escuchado:</span>
+                        <p id="speech-recognized-text" class="text-lg font-medium text-slate-700 italic">"..."</p>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <button onclick="skipSpeakItem()" class="px-4 py-2 text-slate-500 hover:text-slate-800 text-sm font-medium transition-colors">
+                            Siguiente verbo &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: GESTIÓN DE VERBOS -->
+        <section id="content-manage" class="tab-content hidden flex-1 flex flex-col space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1">
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-100 shadow-lg shadow-slate-200/40 sticky top-24">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 id="form-title" class="font-serif text-xl font-bold text-slate-800">Añadir Nuevo Verbo</h3>
+                            <button onclick="resetVerbForm()" id="cancel-edit-btn" class="hidden text-xs text-slate-400 hover:text-slate-600 underline">Cancelar edición</button>
+                        </div>
+
+                        <form id="verb-form" onsubmit="handleSaveVerb(event)" class="space-y-4">
+                            <input type="hidden" id="verb-id">
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Verbo en Francés *</label>
+                                <input type="text" id="input-french" required placeholder="ej. Parler, Être, Avoir" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-french-500 focus:ring-2 focus:ring-french-100 text-sm outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Traducción en Español *</label>
+                                <input type="text" id="input-spanish" required placeholder="ej. Hablar, Ser/Estar, Tener" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-french-500 focus:ring-2 focus:ring-french-100 text-sm outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Conjugaciones clave (Opcional)</label>
+                                <p class="text-[11px] text-slate-400 mb-2">Formato: Tiempo: pron=conjugación (separados por coma)</p>
+                                <textarea id="input-conjugations" rows="4" placeholder="Présent: je parle, tu parles, il parle&#10;Passé Composé: j'ai parlé" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-french-500 focus:ring-2 focus:ring-french-100 text-xs font-mono outline-none"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-french-600 hover:bg-french-700 text-white font-semibold text-sm shadow-md shadow-french-200 transition-all">
+                                Guardar Verbo
+                            </button>
+                        </form>
+
+                        <div class="mt-6 pt-6 border-t border-slate-100 space-y-2">
+                            <button onclick="loadSampleVerbs()" class="w-full py-2.5 px-3 rounded-xl border border-dashed border-french-300 text-french-700 hover:bg-french-50 font-medium text-xs transition-colors flex items-center justify-center space-x-2">
+                                <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                                <span>Cargar verbos de ejemplo</span>
+                            </button>
+                            <button onclick="switchTab('import')" class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors flex items-center justify-center space-x-2">
+                                <i data-lucide="file-up" class="w-4 h-4"></i>
+                                <span>Cargar desde archivo (.json/.csv)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <div class="glass-panel rounded-3xl p-6 border border-slate-100 shadow-lg shadow-slate-200/40">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                            <div>
+                                <h3 class="font-serif text-xl font-bold text-slate-800">Biblioteca de Verbos</h3>
+                                <p class="text-xs text-slate-500">Tus verbos guardados para practicar</p>
+                            </div>
+
+                            <div class="relative min-w-[200px]">
+                                <input type="text" id="search-verb" oninput="renderVerbList()" placeholder="Buscar verbo..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-french-500">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3 px-3">Francés</th>
+                                        <th class="py-3 px-3">Español</th>
+                                        <th class="py-3 px-3 hidden sm:table-cell">Conjugaciones</th>
+                                        <th class="py-3 px-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="verb-list-table-body" class="divide-y divide-slate-100 text-sm">
+                                </tbody>
+                            </table>
+                            <div id="empty-verb-msg" class="text-center py-12 hidden">
+                                <i data-lucide="book-open" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                                <p class="text-slate-500 font-medium text-sm">Aún no tienes verbos guardados.</p>
+                                <p class="text-slate-400 text-xs mt-1">Añade uno con el formulario o carga los verbos desde un archivo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: IMPORTAR / EXPORTAR -->
+        <section id="content-import" class="tab-content hidden flex-1 flex flex-col space-y-6">
+            <div class="max-w-4xl w-full mx-auto py-2 space-y-6">
+                <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-md">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="px-3 py-1 bg-french-100 text-french-700 text-xs font-semibold rounded-full uppercase tracking-wider">Carga Masiva</span>
+                            <h2 class="font-serif text-2xl sm:text-3xl font-bold text-slate-800 mt-2">Importar / Exportar Lista de Verbos</h2>
+                            <p class="text-slate-500 text-sm mt-1">Sube archivos JSON, CSV o TXT para agregar múltiples verbos de forma rápida.</p>
+                        </div>
+                        <div class="p-3 bg-french-50 text-french-600 rounded-2xl hidden sm:block">
+                            <i data-lucide="folder-up" class="w-8 h-8"></i>
+                        </div>
+                    </div>
+
+                    <div id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="mt-6 border-2 border-dashed border-french-300 hover:border-french-500 rounded-2xl p-8 text-center bg-french-50/40 hover:bg-french-50/80 transition-all cursor-pointer relative">
+                        <input type="file" id="file-input" accept=".json,.csv,.txt" onchange="handleFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div class="flex flex-col items-center justify-center space-y-3 pointer-events-none">
+                            <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center text-french-600">
+                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">Arrastra tu archivo aquí o <span class="text-french-600 underline">examina tus archivos</span></p>
+                                <p class="text-xs text-slate-400 mt-1">Formatos soportados: .JSON, .CSV, .TXT (hasta 5 MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-6 mt-4 text-xs font-medium text-slate-600">
+                        <span class="text-slate-400">Modo de importación:</span>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="import-mode" value="merge" checked class="text-french-600 focus:ring-french-500">
+                            <span>Fusionar con la lista existente</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="import-mode" value="replace" class="text-french-600 focus:ring-french-500">
+                            <span>Reemplazar lista actual</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="import-preview-card" class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-md hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>
+                            <h3 class="font-bold text-slate-800 text-base">Verbos listos para importar: <span id="preview-count" class="text-french-600">0</span></h3>
+                        </div>
+                        <button onclick="confirmImport()" class="px-5 py-2.5 bg-french-600 hover:bg-french-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-2">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            <span>Confirmar e Importar</span>
+                        </button>
+                    </div>
+
+                    <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 sticky top-0 text-slate-500 border-b">
+                                <tr>
+                                    <th class="p-2.5">Francés</th>
+                                    <th class="p-2.5">Español</th>
+                                    <th class="p-2.5">Conjugaciones Detectadas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="preview-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Exportar mi Lista Actual</h4>
+                        </div>
+                        <p class="text-xs text-slate-500">Guarda una copia de seguridad de tus verbos en tu ordenador.</p>
+                        <div class="flex space-x-2 pt-2">
+                            <button onclick="exportVerbs('json')" class="flex-1 py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="file-json" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                <span>Exportar JSON</span>
+                            </button>
+                            <button onclick="exportVerbs('csv')" class="flex-1 py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                <span>Exportar CSV</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                                <i data-lucide="file-code" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Plantillas de Ejemplo</h4>
+                        </div>
+                        <p class="text-xs text-slate-500">Descarga una plantilla para saber exactamente cómo estructurar tus archivos.</p>
+                        <div class="flex space-x-2 pt-2">
+                            <button onclick="downloadTemplate('csv')" class="flex-1 py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Plantilla CSV</span>
+                            </button>
+                            <button onclick="downloadTemplate('json')" class="flex-1 py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Plantilla JSON</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: ESTADÍSTICAS -->
+        <section id="content-stats" class="tab-content hidden flex-1 flex flex-col">
+            <div class="max-w-4xl w-full mx-auto space-y-6 py-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Respuestas</span>
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <h4 id="stat-total-answers" class="text-3xl font-bold text-slate-800 mt-2">0</h4>
+                        <p class="text-xs text-slate-400 mt-1">Ejercicios completados</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Precisión</span>
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                                <i data-lucide="target" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <h4 id="stat-accuracy" class="text-3xl font-bold text-slate-800 mt-2">0%</h4>
+                        <p class="text-xs text-slate-400 mt-1">Porcentaje de aciertos</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mejor Racha</span>
+                            <div class="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                                <i data-lucide="zap" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <h4 id="stat-max-streak" class="text-3xl font-bold text-slate-800 mt-2">0</h4>
+                        <p class="text-xs text-slate-400 mt-1">Aciertos seguidos</p>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-french-600 via-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-xl shadow-french-200 relative overflow-hidden">
+                    <div class="relative z-10 max-w-xl">
+                        <span class="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full uppercase tracking-wider backdrop-blur-md">Motivación du jour</span>
+                        <h3 id="motivational-quote" class="font-serif text-2xl sm:text-3xl font-bold mt-3 mb-2">"Le succès est la somme de petits efforts répétés jour après jour."</h3>
+                        <p id="motivational-author" class="text-white/80 text-sm italic">— Robert Collier</p>
+                    </div>
+                    <i data-lucide="quote" class="w-48 h-48 text-white/5 absolute -right-6 -bottom-10 pointer-events-none"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Banner -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-medium border border-slate-800">
+            <i data-lucide="info" id="toast-icon" class="w-4 h-4 text-french-400"></i>
+            <span id="toast-msg">Mensaje de notificación</span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables & default verb dataset
+        const FRENCH_ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ù', 'û', 'ç', 'î', 'ï', 'ô', 'œ'];
+
+        const DEFAULT_VERBS = [
+            {
+                id: '1',
+                french: 'être',
+                spanish: 'ser / estar',
+                conjugations: {
+                    'Présent': { 'je': 'suis', 'tu': 'es', 'il/elle': 'est', 'nous': 'sommes', 'vous': 'êtes', 'ils/elles': 'sont' },
+                    'Passé Composé': { 'je': 'ai été', 'tu': 'as été', 'il/elle': 'a été', 'nous': 'avons été', 'vous': 'avez été', 'ils/elles': 'ont été' },
+                    'Futur Simple': { 'je': 'serai', 'tu': 'seras', 'il/elle': 'sera', 'nous': 'serons', 'vous': 'serez', 'ils/elles': 'seront' }
+                }
+            },
+            {
+                id: '2',
+                french: 'avoir',
+                spanish: 'tener',
+                conjugations: {
+                    'Présent': { 'je': 'ai', 'tu': 'as', 'il/elle': 'a', 'nous': 'avons', 'vous': 'avez', 'ils/elles': 'ont' },
+                    'Passé Composé': { 'je': 'ai eu', 'tu': 'as eu', 'il/elle': 'a eu', 'nous': 'avons eu', 'vous': 'avez eu', 'ils/elles': 'ont eu' },
+                    'Futur Simple': { 'je': 'aurai', 'tu': 'auras', 'il/elle': 'aura', 'nous': 'aurons', 'vous': 'aurez', 'ils/elles': 'auront' }
+                }
+            },
+            {
+                id: '3',
+                french: 'parler',
+                spanish: 'hablar',
+                conjugations: {
+                    'Présent': { 'je': 'parle', 'tu': 'parles', 'il/elle': 'parle', 'nous': 'parlons', 'vous': 'parlez', 'ils/elles': 'parlent' },
+                    'Imparfait': { 'je': 'parlais', 'tu': 'parlais', 'il/elle': 'parlait', 'nous': 'parlions', 'vous': 'parliez', 'ils/elles': 'parlaient' },
+                    'Futur Simple': { 'je': 'parlerai', 'tu': 'parleras', 'il/elle': 'parlera', 'nous': 'parlerons', 'vous': 'parlerez', 'ils/elles': 'parleront' }
+                }
+            },
+            {
+                id: '4',
+                french: 'faire',
+                spanish: 'hacer',
+                conjugations: {
+                    'Présent': { 'je': 'fais', 'tu': 'fais', 'il/elle': 'fait', 'nous': 'faisons', 'vous': 'faîtes', 'ils/elles': 'font' },
+                    'Passé Composé': { 'je': 'ai fait', 'tu': 'as fait', 'il/elle': 'a fait', 'nous': 'avons fait', 'vous': 'avez fait', 'ils/elles': 'ont fait' }
+                }
+            },
+            {
+                id: '5',
+                french: 'aller',
+                spanish: 'ir',
+                conjugations: {
+                    'Présent': { 'je': 'vais', 'tu': 'vas', 'il/elle': 'va', 'nous': 'allons', 'vous': 'allez', 'ils/elles': 'vont' },
+                    'Passé Composé': { 'je': 'suis allé(e)', 'tu': 'es allé(e)', 'il/elle': 'est allé(e)', 'nous': 'sommes allé(e)s', 'vous': 'êtes allé(e)(s)', 'ils/elles': 'sont allé(e)s' }
+                }
+            }
+        ];
+
+        let verbs = [];
+        let stats = { streak: 0, score: 0, totalAnswers: 0, correctAnswers: 0, maxStreak: 0 };
+        let currentWriteItem = null;
+        let currentSpeakItem = null;
+        let speechRecognition = null;
+        let isListening = false;
+        let pendingImportVerbs = [];
+        let selectedTenseFilter = 'all'; // 'all' or specific tense string
+
+        // Initialization on window load
+        window.onload = function() {
+            loadUserData();
+            setupAccentBar();
+            setupSpeechRecognition();
+            populateTenseDropdowns();
+            renderVerbList();
+            updateStatsUI();
+            nextWriteItem();
+            nextSpeakItem();
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        };
+
+        function loadUserData() {
+            const savedVerbs = localStorage.getItem('french_verbs_data');
+            const savedStats = localStorage.getItem('french_verbs_stats');
+
+            if (savedVerbs) {
+                try { verbs = JSON.parse(savedVerbs); } catch (e) { verbs = [...DEFAULT_VERBS]; }
+            } else {
+                verbs = [...DEFAULT_VERBS];
+            }
+
+            if (savedStats) {
+                try { stats = JSON.parse(savedStats); } catch (e) {}
+            }
+            updateVerbBadge();
+        }
+
+        function saveVerbs() {
+            localStorage.setItem('french_verbs_data', JSON.stringify(verbs));
+            updateVerbBadge();
+            populateTenseDropdowns();
+            renderVerbList();
+        }
+
+        function saveStats() {
+            localStorage.setItem('french_verbs_stats', JSON.stringify(stats));
+            updateStatsUI();
+        }
+
+        function updateVerbBadge() {
+            const badge = document.getElementById('verb-count-badge');
+            if (badge) badge.textContent = verbs.length;
+        }
+
+        function populateTenseDropdowns() {
+            // Gather all available tenses across all verbs
+            const tensesSet = new Set();
+            verbs.forEach(v => {
+                if (v.conjugations) {
+                    Object.keys(v.conjugations).forEach(t => tensesSet.add(t));
+                }
+            });
+
+            const writeSelect = document.getElementById('write-tense-filter');
+            const speakSelect = document.getElementById('speak-tense-filter');
+            
+            [writeSelect, speakSelect].forEach(selectEl => {
+                if (!selectEl) return;
+                const currentVal = selectEl.value || 'all';
+                selectEl.innerHTML = '<option value="all">Todos los tiempos (Aleatorio)</option><option value="Infinitif">Infinitivo</option>';
+                
+                tensesSet.forEach(tense => {
+                    const opt = document.createElement('option');
+                    opt.value = tense;
+                    opt.textContent = tense;
+                    selectEl.appendChild(opt);
+                });
+
+                selectEl.value = currentVal;
+            });
+        }
+
+        window.changeTenseFilter = function(mode, selectEl) {
+            selectedTenseFilter = selectEl.value;
+            if (mode === 'write') {
+                nextWriteItem();
+            } else {
+                nextSpeakItem();
+            }
+        };
+
+        // Global switchTab function attached to window explicitly
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-french-600', 'bg-french-50', 'border', 'border-french-100', 'shadow-sm');
+                btn.classList.add('text-slate-600');
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'text-french-600', 'bg-french-50', 'border', 'border-french-100', 'shadow-sm');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            const activeContent = document.getElementById(`content-${tabId}`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+
+            if (tabId === 'write' && (!currentWriteItem || currentWriteItem.solved)) {
+                nextWriteItem();
+            } else if (tabId === 'speak' && (!currentSpeakItem || currentSpeakItem.solved)) {
+                nextSpeakItem();
+            }
+        };
+
+        function setupAccentBar() {
+            const container = document.getElementById('accent-bar');
+            const template = document.getElementById('accent-btn-template');
+            if (!container || !template) return;
+            container.innerHTML = '';
+
+            FRENCH_ACCENTS.forEach(char => {
+                const clone = template.content.cloneNode(true);
+                const btn = clone.querySelector('button');
+                btn.textContent = char;
+                btn.onclick = () => insertAccent(char);
+                container.appendChild(btn);
+            });
+        }
+
+        function insertAccent(char) {
+            const input = document.getElementById('write-input');
+            if (!input) return;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            
+            input.value = text.substring(0, start) + char + text.substring(end);
+            input.focus();
+            input.setSelectionRange(start + 1, start + 1);
+        }
+
+        function nextWriteItem() {
+            const promptEl = document.getElementById('write-prompt-es');
+            const tagEl = document.getElementById('write-tense-tag');
+            const inputEl = document.getElementById('write-input');
+            const feedbackEl = document.getElementById('write-feedback');
+
+            if (!promptEl) return;
+
+            if (verbs.length === 0) {
+                promptEl.textContent = "¡Añade verbos para comenzar!";
+                return;
+            }
+
+            if (inputEl) {
+                inputEl.value = '';
+                inputEl.disabled = false;
+            }
+            if (feedbackEl) feedbackEl.classList.add('hidden');
+
+            // Filter verbs matching chosen tense if specified
+            let validCandidates = [];
+            verbs.forEach(v => {
+                if (selectedTenseFilter === 'Infinitif') {
+                    validCandidates.push({ verb: v, tense: 'Infinitif', pronoun: null, target: v.french });
+                } else if (selectedTenseFilter === 'all') {
+                    validCandidates.push({ verb: v, tense: 'Infinitif', pronoun: null, target: v.french });
+                    if (v.conjugations) {
+                        Object.keys(v.conjugations).forEach(t => {
+                            Object.keys(v.conjugations[t]).forEach(p => {
+                                validCandidates.push({ verb: v, tense: t, pronoun: p, target: `${p} ${v.conjugations[t][p]}` });
+                            });
+                        });
+                    }
+                } else {
+                    // Specific tense requested
+                    if (v.conjugations && v.conjugations[selectedTenseFilter]) {
+                        Object.keys(v.conjugations[selectedTenseFilter]).forEach(p => {
+                            validCandidates.push({ verb: v, tense: selectedTenseFilter, pronoun: p, target: `${p} ${v.conjugations[selectedTenseFilter][p]}` });
+                        });
+                    }
+                }
+            });
+
+            if (validCandidates.length === 0) {
+                promptEl.textContent = `No hay conjugaciones para el tiempo: ${selectedTenseFilter}`;
+                if (tagEl) tagEl.textContent = selectedTenseFilter;
+                return;
+            }
+
+            const chosen = validCandidates[Math.floor(Math.random() * validCandidates.length)];
+
+            if (chosen.tense === 'Infinitif') {
+                currentWriteItem = {
+                    verb: chosen.verb.french,
+                    prompt: `Infinitif: ${chosen.verb.spanish}`,
+                    target: chosen.verb.french,
+                    tense: 'Infinitif'
+                };
+            } else {
+                const conjVal = chosen.verb.conjugations[chosen.tense][chosen.pronoun];
+                currentWriteItem = {
+                    verb: chosen.verb.french,
+                    prompt: `${chosen.pronoun} (${chosen.verb.spanish})`,
+                    target: `${chosen.pronoun} ${conjVal}`.trim(),
+                    tense: chosen.tense
+                };
+            }
+
+            if (tagEl) tagEl.textContent = currentWriteItem.tense;
+            promptEl.textContent = currentWriteItem.prompt;
+            if (inputEl) inputEl.focus();
+        }
+
+        function handleWriteSubmit(e) {
+            e.preventDefault();
+            if (!currentWriteItem) return;
+
+            const inputEl = document.getElementById('write-input');
+            if (!inputEl) return;
+
+            const userInput = inputEl.value.trim().toLowerCase();
+            const targetClean = currentWriteItem.target.trim().toLowerCase();
+            const isCorrect = userInput === targetClean;
+
+            showWriteFeedback(isCorrect, currentWriteItem.target);
+
+            stats.totalAnswers++;
+            if (isCorrect) {
+                stats.score += 10;
+                stats.streak++;
+                stats.correctAnswers++;
+                if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+                speakText(currentWriteItem.target);
+            } else {
+                stats.streak = 0;
+            }
+            saveStats();
+
+            inputEl.disabled = true;
+
+            setTimeout(() => {
+                nextWriteItem();
+            }, isCorrect ? 1500 : 3000);
+        }
+
+        window.skipWriteItem = function() {
+            stats.streak = 0;
+            saveStats();
+            nextWriteItem();
+        };
+
+        function showWriteFeedback(isCorrect, correctAnswer) {
+            const box = document.getElementById('write-feedback');
+            const icon = document.getElementById('write-feedback-icon');
+            const title = document.getElementById('write-feedback-title');
+            const msg = document.getElementById('write-feedback-msg');
+            const correctText = document.getElementById('write-feedback-correct');
+
+            if (!box) return;
+            box.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-rose-50', 'border-rose-200');
+
+            if (isCorrect) {
+                box.classList.add('bg-emerald-50', 'border-emerald-200');
+                if (icon) {
+                    icon.className = 'p-2 rounded-xl text-white mt-0.5 bg-emerald-500';
+                    icon.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+                }
+                if (title) { title.textContent = "¡Très bien! ¡Excelente!"; title.className = 'font-bold text-sm text-emerald-900'; }
+                if (msg) { msg.textContent = "Has escrito la respuesta perfectamente."; msg.className = 'text-sm mt-0.5 text-emerald-700'; }
+                if (correctText) correctText.classList.add('hidden');
+            } else {
+                box.classList.add('bg-rose-50', 'border-rose-200');
+                if (icon) {
+                    icon.className = 'p-2 rounded-xl text-white mt-0.5 bg-rose-500';
+                    icon.innerHTML = '<i data-lucide="x" class="w-5 h-5"></i>';
+                }
+                if (title) { title.textContent = "Oups! Casi lo tienes"; title.className = 'font-bold text-sm text-rose-900'; }
+                if (msg) { msg.textContent = "La respuesta correcta era:"; msg.className = 'text-sm mt-0.5 text-rose-700'; }
+                if (correctText) {
+                    correctText.textContent = correctAnswer;
+                    correctText.classList.remove('hidden');
+                }
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                speechRecognition = new SpeechRecognition();
+                speechRecognition.lang = 'fr-FR';
+                speechRecognition.continuous = false;
+                speechRecognition.interimResults = false;
+
+                speechRecognition.onstart = () => {
+                    isListening = true;
+                    updateMicUI(true);
+                };
+
+                speechRecognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const resEl = document.getElementById('speech-recognized-text');
+                    if (resEl) resEl.textContent = `"${transcript}"`;
+                    evaluatePronunciation(transcript);
+                };
+
+                speechRecognition.onerror = () => {
+                    showToast('No pudimos reconocer el audio. Inténtalo de nuevo.');
+                    updateMicUI(false);
+                };
+
+                speechRecognition.onend = () => {
+                    isListening = false;
+                    updateMicUI(false);
+                };
+            }
+        }
+
+        window.toggleSpeechRecognition = function() {
+            if (!speechRecognition) {
+                showToast('Tu navegador no soporta el reconocimiento de voz.');
+                return;
+            }
+
+            if (isListening) {
+                speechRecognition.stop();
+            } else {
+                try {
+                    speechRecognition.start();
+                } catch(e) {
+                    speechRecognition.stop();
+                }
+            }
+        };
+
+        function updateMicUI(listening) {
+            const btn = document.getElementById('mic-button');
+            const status = document.getElementById('mic-status');
+            if (!btn || !status) return;
+
+            if (listening) {
+                btn.classList.add('mic-pulse');
+                status.textContent = "Escuchando... ¡Habla ahora en francés!";
+                status.className = 'text-sm font-semibold text-roseish-500 mt-4 animate-pulse';
+            } else {
+                btn.classList.remove('mic-pulse');
+                status.textContent = "Haz clic en el micrófono para hablar";
+                status.className = 'text-sm font-medium text-slate-500 mt-4';
+            }
+        }
+
+        function nextSpeakItem() {
+            if (verbs.length === 0) return;
+
+            const resEl = document.getElementById('speech-recognized-text');
+            if (resEl) resEl.textContent = '"..."';
+
+            let validCandidates = [];
+            verbs.forEach(v => {
+                if (selectedTenseFilter === 'Infinitif') {
+                    validCandidates.push({ verb: v, tense: 'Infinitif', pronoun: null, target: v.french, spanish: v.spanish });
+                } else if (selectedTenseFilter === 'all') {
+                    validCandidates.push({ verb: v, tense: 'Infinitif', pronoun: null, target: v.french, spanish: v.spanish });
+                    if (v.conjugations) {
+                        Object.keys(v.conjugations).forEach(t => {
+                            Object.keys(v.conjugations[t]).forEach(p => {
+                                validCandidates.push({ verb: v, tense: t, pronoun: p, target: `${p} ${v.conjugations[t][p]}`, spanish: `${p} (${v.spanish})` });
+                            });
+                        });
+                    }
+                } else {
+                    if (v.conjugations && v.conjugations[selectedTenseFilter]) {
+                        Object.keys(v.conjugations[selectedTenseFilter]).forEach(p => {
+                            validCandidates.push({ verb: v, tense: selectedTenseFilter, pronoun: p, target: `${p} ${v.conjugations[selectedTenseFilter][p]}`, spanish: `${p} (${v.spanish})` });
+                        });
+                    }
+                }
+            });
+
+            if (validCandidates.length === 0) {
+                currentSpeakItem = { target: 'Aucun verbe', spanish: 'No hay elementos para este tiempo', tense: selectedTenseFilter };
+            } else {
+                const chosen = validCandidates[Math.floor(Math.random() * validCandidates.length)];
+                if (chosen.tense === 'Infinitif') {
+                    currentSpeakItem = { target: chosen.verb.french, spanish: chosen.verb.spanish, tense: 'Infinitif' };
+                } else {
+                    currentSpeakItem = { target: chosen.target, spanish: chosen.spanish, tense: chosen.tense };
+                }
+            }
+
+            const targetEl = document.getElementById('speak-target-text');
+            const transEl = document.getElementById('speak-translation');
+            const tagEl = document.getElementById('speak-tense-tag');
+
+            if (targetEl) targetEl.textContent = currentSpeakItem.target;
+            if (transEl) transEl.textContent = currentSpeakItem.spanish;
+            if (tagEl) tagEl.textContent = currentSpeakItem.tense;
+        }
+
+        window.skipSpeakItem = function() {
+            nextSpeakItem();
+        };
+
+        function evaluatePronunciation(spokenText) {
+            if (!currentSpeakItem) return;
+
+            const targetClean = currentSpeakItem.target.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const spokenClean = spokenText.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+            const isMatch = targetClean === spokenClean || spokenClean.includes(targetClean) || targetClean.includes(spokenClean);
+
+            if (isMatch) {
+                showToast("¡Pronunciación excelente! 👏");
+                stats.score += 15;
+                stats.streak++;
+                saveStats();
+                setTimeout(() => nextSpeakItem(), 1800);
+            } else {
+                showToast("Casi perfecto. Escucha la voz nativa y prueba otra vez.");
+            }
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window && text) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        window.listenNativeSpeak = function() {
+            if (currentSpeakItem) {
+                speakText(currentSpeakItem.target);
+            }
+        };
+
+        window.renderVerbList = function() {
+            const tbody = document.getElementById('verb-list-table-body');
+            const emptyMsg = document.getElementById('empty-verb-msg');
+            const searchInput = document.getElementById('search-verb');
+            if (!tbody) return;
+
+            const searchTerm = (searchInput ? searchInput.value : '').toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = verbs.filter(v => 
+                v.french.toLowerCase().includes(searchTerm) || 
+                v.spanish.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                if (emptyMsg) emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                if (emptyMsg) emptyMsg.classList.add('hidden');
+            }
+
+            filtered.forEach(verb => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+                const conjCount = Object.keys(verb.conjugations || {}).length;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 font-semibold text-slate-800">${escapeHtml(verb.french)}</td>
+                    <td class="py-3 px-3 text-slate-600">${escapeHtml(verb.spanish)}</td>
+                    <td class="py-3 px-3 hidden sm:table-cell">
+                        <span class="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-medium">${conjCount} tiempos</span>
+                    </td>
+                    <td class="py-3 px-3 text-right space-x-1">
+                        <button onclick="editVerb('${verb.id}')" class="p-1.5 text-slate-400 hover:text-french-600 rounded-lg hover:bg-white transition-colors" title="Editar">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteVerb('${verb.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-white transition-colors" title="Borrar">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.handleSaveVerb = function(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('verb-id').value;
+            const french = document.getElementById('input-french').value.trim();
+            const spanish = document.getElementById('input-spanish').value.trim();
+            const conjRaw = document.getElementById('input-conjugations').value.trim();
+
+            const parsedConjugations = parseConjugationsText(conjRaw);
+
+            if (idInput) {
+                const index = verbs.findIndex(v => v.id === idInput);
+                if (index !== -1) {
+                    verbs[index] = { ...verbs[index], french, spanish, conjugations: parsedConjugations };
+                    showToast('Verbo actualizado correctamente.');
+                }
+            } else {
+                const newVerb = {
+                    id: Date.now().toString(),
+                    french,
+                    spanish,
+                    conjugations: parsedConjugations
+                };
+                verbs.push(newVerb);
+                showToast('Nuevo verbo añadido a tu lista.');
+            }
+
+            saveVerbs();
+            resetVerbForm();
+        };
+
+        function parseConjugationsText(text) {
+            if (!text) return {};
+            const result = {};
+            const lines = text.split('\n');
+
+            lines.forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const tense = parts[0].trim();
+                    const pairs = parts[1].split(',');
+                    result[tense] = {};
+
+                    pairs.forEach(pair => {
+                        const sub = pair.split('=');
+                        if (sub.length === 2) {
+                            result[tense][sub[0].trim()] = sub[1].trim();
+                        } else if (pair.trim().includes(' ')) {
+                            const firstSpace = pair.trim().indexOf(' ');
+                            const p = pair.trim().substring(0, firstSpace);
+                            const c = pair.trim().substring(firstSpace + 1);
+                            result[tense][p] = c;
+                        }
+                    });
+                }
+            });
+            return result;
+        }
+
+        window.editVerb = function(id) {
+            const verb = verbs.find(v => v.id === id);
+            if (!verb) return;
+
+            document.getElementById('verb-id').value = verb.id;
+            document.getElementById('input-french').value = verb.french;
+            document.getElementById('input-spanish').value = verb.spanish;
+            
+            let conjText = '';
+            for (const [tense, group] of Object.entries(verb.conjugations || {})) {
+                const pairs = Object.entries(group).map(([p, c]) => `${p}=${c}`).join(', ');
+                conjText += `${tense}: ${pairs}\n`;
+            }
+            document.getElementById('input-conjugations').value = conjText.trim();
+
+            document.getElementById('form-title').textContent = "Editar Verbo";
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        };
+
+        window.resetVerbForm = function() {
+            document.getElementById('verb-id').value = '';
+            document.getElementById('verb-form').reset();
+            document.getElementById('form-title').textContent = "Añadir Nuevo Verbo";
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        };
+
+        window.deleteVerb = function(id) {
+            verbs = verbs.filter(v => v.id !== id);
+            saveVerbs();
+            showToast('Verbo eliminado.');
+        };
+
+        window.loadSampleVerbs = function() {
+            verbs = [...DEFAULT_VERBS];
+            saveVerbs();
+            showToast('Verbos de ejemplo cargados.');
+        };
+
+        // File Import and Export handlers
+        window.handleDragOver = function(e) {
+            e.preventDefault();
+            const zone = document.getElementById('drop-zone');
+            if (zone) zone.classList.add('border-french-500', 'bg-french-100/50');
+        };
+
+        window.handleDragLeave = function(e) {
+            e.preventDefault();
+            const zone = document.getElementById('drop-zone');
+            if (zone) zone.classList.remove('border-french-500', 'bg-french-100/50');
+        };
+
+        window.handleDrop = function(e) {
+            e.preventDefault();
+            const zone = document.getElementById('drop-zone');
+            if (zone) zone.classList.remove('border-french-500', 'bg-french-100/50');
+            if (e.dataTransfer.files.length > 0) {
+                processFile(e.dataTransfer.files[0]);
+            }
+        };
+
+        window.handleFileSelect = function(e) {
+            if (e.target.files.length > 0) {
+                processFile(e.target.files[0]);
+            }
+        };
+
+        function processFile(file) {
+            const reader = new FileReader();
+            const filename = file.name.toLowerCase();
+
+            reader.onload = function(evt) {
+                const content = evt.target.result;
+                try {
+                    if (filename.endsWith('.json')) {
+                        parseJSONFile(content);
+                    } else if (filename.endsWith('.csv') || filename.endsWith('.txt')) {
+                        parseCSVFile(content);
+                    } else {
+                        showToast("Formato no soportado. Usa .json, .csv o .txt");
+                    }
+                } catch (err) {
+                    showToast("Error al procesar el archivo: formato inválido.");
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function parseJSONFile(jsonString) {
+            const data = JSON.parse(jsonString);
+            const items = Array.isArray(data) ? data : [data];
+            
+            pendingImportVerbs = items.map((item, idx) => {
+                const french = item.french || item.infinitivo || item.verbo || '';
+                const spanish = item.spanish || item.espanol || item.traduccion || '';
+                let conjugations = item.conjugations || {};
+
+                return {
+                    id: Date.now().toString() + idx,
+                    french: french.trim(),
+                    spanish: spanish.trim(),
+                    conjugations: conjugations
+                };
+            }).filter(v => v.french && v.spanish);
+
+            renderImportPreview();
+        }
+
+        function parseCSVFile(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            const parsed = [];
+
+            lines.forEach((line, idx) => {
+                if (!line.trim()) return;
+                
+                const delimiter = line.includes(';') ? ';' : ',';
+                const cols = line.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, ''));
+
+                if (idx === 0 && (cols[0].toLowerCase().includes('verbo') || cols[0].toLowerCase().includes('french') || cols[0].toLowerCase().includes('infinitivo'))) {
+                    return;
+                }
+
+                if (cols.length >= 2) {
+                    const french = cols[0];
+                    const spanish = cols[1];
+                    const conjugations = {};
+
+                    if (cols.length >= 8) {
+                        conjugations['Présent'] = {
+                            'je': cols[2],
+                            'tu': cols[3],
+                            'il/elle': cols[4],
+                            'nous': cols[5],
+                            'vous': cols[6],
+                            'ils/elles': cols[7]
+                        };
+                    }
+
+                    parsed.push({
+                        id: Date.now().toString() + idx,
+                        french,
+                        spanish,
+                        conjugations
+                    });
+                }
+            });
+
+            pendingImportVerbs = parsed;
+            renderImportPreview();
+        }
+
+        function renderImportPreview() {
+            const card = document.getElementById('import-preview-card');
+            const tbody = document.getElementById('preview-table-body');
+            const countText = document.getElementById('preview-count');
+
+            if (pendingImportVerbs.length === 0) {
+                showToast("No se encontraron verbos válidos en el archivo.");
+                if (card) card.classList.add('hidden');
+                return;
+            }
+
+            if (countText) countText.textContent = pendingImportVerbs.length;
+            if (tbody) {
+                tbody.innerHTML = '';
+                pendingImportVerbs.forEach(v => {
+                    const tr = document.createElement('tr');
+                    const tenses = Object.keys(v.conjugations || {}).join(', ') || 'Ninguna';
+
+                    tr.innerHTML = `
+                        <td class="p-2.5 font-bold text-slate-800">${escapeHtml(v.french)}</td>
+                        <td class="p-2.5 text-slate-600">${escapeHtml(v.spanish)}</td>
+                        <td class="p-2.5 text-slate-400">${escapeHtml(tenses)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            if (card) card.classList.remove('hidden');
+        }
+
+        window.confirmImport = function() {
+            if (pendingImportVerbs.length === 0) return;
+
+            const modeInput = document.querySelector('input[name="import-mode"]:checked');
+            const mode = modeInput ? modeInput.value : 'merge';
+
+            if (mode === 'replace') {
+                verbs = [...pendingImportVerbs];
+            } else {
+                pendingImportVerbs.forEach(item => {
+                    const exists = verbs.some(v => v.french.toLowerCase() === item.french.toLowerCase());
+                    if (!exists) {
+                        verbs.push(item);
+                    }
+                });
+            }
+
+            saveVerbs();
+            showToast(`¡Se han importado ${pendingImportVerbs.length} verbos correctamente!`);
+            
+            pendingImportVerbs = [];
+            const previewCard = document.getElementById('import-preview-card');
+            const fileInput = document.getElementById('file-input');
+            if (previewCard) previewCard.classList.add('hidden');
+            if (fileInput) fileInput.value = '';
+            
+            window.switchTab('manage');
+        };
+
+        window.exportVerbs = function(type) {
+            if (verbs.length === 0) {
+                showToast("No hay verbos para exportar.");
+                return;
+            }
+
+            let dataStr = "";
+            let filename = `mis_verbos_frances.${type}`;
+
+            if (type === 'json') {
+                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(verbs, null, 2));
+            } else if (type === 'csv') {
+                let csvLines = ["French,Spanish,Je,Tu,Il/Elle,Nous,Vous,Ils/Elles"];
+                verbs.forEach(v => {
+                    const pres = (v.conjugations && v.conjugations['Présent']) || {};
+                    const line = [
+                        `"${v.french}"`,
+                        `"${v.spanish}"`,
+                        `"${pres['je'] || ''}"`,
+                        `"${pres['tu'] || ''}"`,
+                        `"${pres['il/elle'] || ''}"`,
+                        `"${pres['nous'] || ''}"`,
+                        `"${pres['vous'] || ''}"`,
+                        `"${pres['ils/elles'] || ''}"`
+                    ].join(",");
+                    csvLines.push(line);
+                });
+                dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvLines.join("\n"));
+            }
+
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        };
+
+        window.downloadTemplate = function(type) {
+            let dataStr = "";
+            let filename = `plantilla_verbos.${type}`;
+
+            if (type === 'json') {
+                const templateData = [
+                    {
+                        "french": "Manger",
+                        "spanish": "Comer",
+                        "conjugations": {
+                            "Présent": { "je": "mange", "tu": "manges", "il/elle": "mange", "nous": "mangeons", "vous": "mangez", "ils/elles": "mangent" }
+                        }
+                    }
+                ];
+                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(templateData, null, 2));
+            } else {
+                const csvContent = "French,Spanish,Je,Tu,Il/Elle,Nous,Vous,Ils/Elles\nManger,Comer,mange,manges,mange,mangeons,mangez,mangent";
+                dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+            }
+
+            const dlNode = document.createElement('a');
+            dlNode.setAttribute("href", dataStr);
+            dlNode.setAttribute("download", filename);
+            document.body.appendChild(dlNode);
+            dlNode.click();
+            dlNode.remove();
+        };
+
+        function updateStatsUI() {
+            const streakEl = document.getElementById('streak-counter');
+            const scoreEl = document.getElementById('score-counter');
+            const totalAnsEl = document.getElementById('stat-total-answers');
+            const accEl = document.getElementById('stat-accuracy');
+            const maxStrEl = document.getElementById('stat-max-streak');
+
+            if (streakEl) streakEl.textContent = stats.streak;
+            if (scoreEl) scoreEl.textContent = stats.score;
+            if (totalAnsEl) totalAnsEl.textContent = stats.totalAnswers;
+            
+            const accuracy = stats.totalAnswers > 0 
+                ? Math.round((stats.correctAnswers / stats.totalAnswers) * 100) 
+                : 0;
+            if (accEl) accEl.textContent = `${accuracy}%`;
+            if (maxStrEl) maxStrEl.textContent = stats.maxStreak;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toast-msg');
+            if (!toast || !msgSpan) return;
+
+            msgSpan.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+</html>
