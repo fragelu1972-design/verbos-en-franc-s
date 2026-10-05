@@ -230,9 +230,20 @@
                         <p id="mic-status" class="text-sm font-medium text-slate-500 mt-4">Haz clic en el micrófono para hablar</p>
                     </div>
 
-                    <div id="speak-result-box" class="min-h-[70px] flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80 mb-6">
+                    <div id="speak-result-box" class="min-h-[85px] flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80 mb-6 transition-all">
                         <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Lo que hemos escuchado:</span>
                         <p id="speech-recognized-text" class="text-lg font-medium text-slate-700 italic">"..."</p>
+                        <div id="speech-feedback-badge" class="mt-2 hidden text-xs font-bold px-3 py-1 rounded-full"></div>
+                    </div>
+
+                    <!-- Manual Override verification buttons in case browser speech recognition fails -->
+                    <div id="speak-actions-row" class="hidden flex items-center justify-center gap-3 mb-4">
+                        <button onclick="handlePronunciationManualResult(false)" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-xl border border-rose-200 transition-all">
+                            Intentar de nuevo
+                        </button>
+                        <button onclick="handlePronunciationManualResult(true)" class="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 transition-all">
+                            ¡Sí, lo he pronunciado bien! (Forzar acierto)
+                        </button>
                     </div>
 
                     <div class="flex justify-between items-center pt-2">
@@ -862,6 +873,8 @@
                 speechRecognition.onstart = () => {
                     isListening = true;
                     updateMicUI(true);
+                    const actionsRow = document.getElementById('speak-actions-row');
+                    if (actionsRow) actionsRow.classList.add('hidden');
                 };
 
                 speechRecognition.onresult = (event) => {
@@ -871,31 +884,45 @@
                     evaluatePronunciation(transcript);
                 };
 
-                speechRecognition.onerror = () => {
-                    showToast('No pudimos reconocer el audio. Inténtalo de nuevo.');
+                speechRecognition.onerror = (event) => {
+                    showToast('No pudimos reconocer el audio con claridad. Inténtalo de nuevo.');
                     updateMicUI(false);
+                    const resEl = document.getElementById('speech-recognized-text');
+                    if (resEl) resEl.textContent = '"(No se detectó voz clara)"';
+                    const actionsRow = document.getElementById('speak-actions-row');
+                    if (actionsRow) actionsRow.classList.remove('hidden');
                 };
 
                 speechRecognition.onend = () => {
                     isListening = false;
                     updateMicUI(false);
                 };
+            } else {
+                const micBtn = document.getElementById('mic-button');
+                if (micBtn) micBtn.title = "El reconocimiento de voz no está soportado en este navegador.";
             }
         }
 
         window.toggleSpeechRecognition = function() {
             if (!speechRecognition) {
-                showToast('Tu navegador no soporta el reconocimiento de voz.');
+                showToast('Tu navegador (como Firefox o dispositivos sin soporte de micrófono seguro) no soporta SpeechRecognition. Usa Chrome o Edge.');
+                const actionsRow = document.getElementById('speak-actions-row');
+                if (actionsRow) actionsRow.classList.remove('hidden');
                 return;
             }
 
             if (isListening) {
-                speechRecognition.stop();
+                try { speechRecognition.stop(); } catch(e){}
             } else {
                 try {
                     speechRecognition.start();
                 } catch(e) {
-                    speechRecognition.stop();
+                    try {
+                        speechRecognition.stop();
+                        speechRecognition.start();
+                    } catch(err) {
+                        showToast('Error al iniciar el micrófono. Comprueba permisos.');
+                    }
                 }
             }
         };
@@ -921,6 +948,10 @@
 
             const resEl = document.getElementById('speech-recognized-text');
             if (resEl) resEl.textContent = '"..."';
+            const badgeEl = document.getElementById('speech-feedback-badge');
+            if (badgeEl) badgeEl.classList.add('hidden');
+            const actionsRow = document.getElementById('speak-actions-row');
+            if (actionsRow) actionsRow.classList.add('hidden');
 
             let validCandidates = [];
             verbs.forEach(v => {
@@ -968,31 +999,82 @@
             nextSpeakItem();
         };
 
+        function normalizeFrenchText(str) {
+            if (!str) return '';
+            return str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents for comparison
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
         function evaluatePronunciation(spokenText) {
             if (!currentSpeakItem) return;
 
-            const targetClean = currentSpeakItem.target.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
-            const spokenClean = spokenText.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+            const targetRaw = currentSpeakItem.target;
+            const targetClean = normalizeFrenchText(targetRaw);
+            const spokenClean = normalizeFrenchText(spokenText);
 
-            // Calculate similarity ratio or check substring match
+            const similarity = calculateSimilarity(targetClean, spokenClean);
             const isExactMatch = targetClean === spokenClean;
             const isSubstring = spokenClean.includes(targetClean) || targetClean.includes(spokenClean);
             
-            // Calculate character similarity for fuzzy matching
-            const similarity = calculateSimilarity(targetClean, spokenClean);
-            const isCloseMatch = similarity >= 0.65 || isExactMatch || isSubstring;
+            // Require at least 70% similarity or valid inclusion
+            const isSuccess = isExactMatch || isSubstring || similarity >= 0.70;
 
-            if (isCloseMatch) {
-                showToast(`¡Pronunciación excelente! (${Math.round(similarity * 100)}% acierto) 👏`);
-                stats.score += 15;
+            const badgeEl = document.getElementById('speech-feedback-badge');
+            const boxEl = document.getElementById('speak-result-box');
+            const actionsRow = document.getElementById('speak-actions-row');
+
+            if (badgeEl) {
+                badgeEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
+                if (isSuccess) {
+                    badgeEl.textContent = `¡Excelente pronunciación! (${Math.round(similarity * 100)}% coincidencia)`;
+                    badgeEl.classList.add('bg-emerald-100', 'text-emerald-800');
+                    if (boxEl) {
+                        boxEl.classList.add('bg-emerald-50/50', 'border-emerald-200');
+                        setTimeout(() => boxEl.classList.remove('bg-emerald-50/50', 'border-emerald-200'), 2000);
+                    }
+
+                    stats.score += 15;
+                    stats.streak++;
+                    if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+                    saveStats();
+                    showToast('¡Bien dicho! +15 puntos 🎉');
+
+                    setTimeout(() => {
+                        nextSpeakItem();
+                    }, 2200);
+                } else {
+                    badgeEl.textContent = `Pronunciación imprecisa (${Math.round(similarity * 100)}%). Lo esperado era: "${targetRaw}"`;
+                    badgeEl.classList.add('bg-rose-100', 'text-rose-800');
+                    if (boxEl) {
+                        boxEl.classList.add('bg-rose-50/50', 'border-rose-200');
+                        setTimeout(() => boxEl.classList.remove('bg-rose-50/50', 'border-rose-200'), 2500);
+                    }
+                    stats.streak = 0;
+                    saveStats();
+                    if (actionsRow) actionsRow.classList.remove('hidden');
+                }
+            }
+        }
+
+        window.handlePronunciationManualResult = function(forcedSuccess) {
+            const actionsRow = document.getElementById('speak-actions-row');
+            if (actionsRow) actionsRow.classList.add('hidden');
+
+            if (forcedSuccess) {
+                stats.score += 10;
                 stats.streak++;
                 if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
                 saveStats();
-                setTimeout(() => nextSpeakItem(), 1800);
+                showToast('¡Registrado como correcto!');
+                nextSpeakItem();
             } else {
-                showToast(`Dijiste: "${spokenText}". Inténtalo de nuevo escuchando al nativo.`);
+                showToast('Escucha al nativo e inténtalo otra vez.');
+                listenNativeSpeak();
             }
-        }
+        };
 
         // Helper fuzzy similarity function (Levenshtein based ratio)
         function calculateSimilarity(s1, s2) {
