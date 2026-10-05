@@ -129,6 +129,17 @@
         <section id="content-write" class="tab-content flex-1 flex flex-col">
             <div class="max-w-3xl w-full mx-auto my-auto py-4">
                 <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 bg-slate-50 p-3 rounded-2xl border border-slate-200/60">
+                        <div class="flex items-center space-x-2 text-xs font-semibold text-slate-600">
+                            <i data-lucide="filter" class="w-4 h-4 text-french-600"></i>
+                            <span>Filtrar tiempo verbal:</span>
+                        </div>
+                        <select id="write-tense-filter" onchange="changeTenseFilter('write', this)" class="bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-french-500 shadow-sm w-full sm:w-auto">
+                            <option value="all">Todos los tiempos (Aleatorio)</option>
+                            <option value="Infinitif">Infinitivo</option>
+                        </select>
+                    </div>
+
                     <div class="w-full bg-slate-100 h-1.5 rounded-full mb-8 overflow-hidden">
                         <div id="write-progress-bar" class="bg-gradient-to-r from-french-500 to-indigo-500 h-full w-0 transition-all duration-300"></div>
                     </div>
@@ -190,6 +201,17 @@
         <section id="content-speak" class="tab-content hidden flex-1 flex flex-col">
             <div class="max-w-3xl w-full mx-auto my-auto py-4">
                 <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 text-center relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 bg-slate-50 p-3 rounded-2xl border border-slate-200/60 text-left">
+                        <div class="flex items-center space-x-2 text-xs font-semibold text-slate-600">
+                            <i data-lucide="filter" class="w-4 h-4 text-french-600"></i>
+                            <span>Filtrar tiempo verbal:</span>
+                        </div>
+                        <select id="speak-tense-filter" onchange="changeTenseFilter('speak', this)" class="bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-french-500 shadow-sm w-full sm:w-auto">
+                            <option value="all">Todos los tiempos (Aleatorio)</option>
+                            <option value="Infinitif">Infinitivo</option>
+                        </select>
+                    </div>
+
                     <div class="bg-gradient-to-b from-french-50/50 to-indigo-50/30 rounded-2xl p-6 mb-8 border border-french-100">
                         <span id="speak-tense-tag" class="inline-block px-3 py-1 bg-white text-french-600 text-xs font-semibold rounded-full uppercase tracking-wider border border-french-100 mb-3">Pronunciación</span>
                         <h2 id="speak-target-text" class="font-serif text-3xl sm:text-4xl font-bold text-slate-800 mb-2">Je parle</h2>
@@ -949,20 +971,69 @@
         function evaluatePronunciation(spokenText) {
             if (!currentSpeakItem) return;
 
-            const targetClean = currentSpeakItem.target.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-            const spokenClean = spokenText.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const targetClean = currentSpeakItem.target.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+            const spokenClean = spokenText.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
 
-            const isMatch = targetClean === spokenClean || spokenClean.includes(targetClean) || targetClean.includes(spokenClean);
+            // Calculate similarity ratio or check substring match
+            const isExactMatch = targetClean === spokenClean;
+            const isSubstring = spokenClean.includes(targetClean) || targetClean.includes(spokenClean);
+            
+            // Calculate character similarity for fuzzy matching
+            const similarity = calculateSimilarity(targetClean, spokenClean);
+            const isCloseMatch = similarity >= 0.65 || isExactMatch || isSubstring;
 
-            if (isMatch) {
-                showToast("¡Pronunciación excelente! 👏");
+            if (isCloseMatch) {
+                showToast(`¡Pronunciación excelente! (${Math.round(similarity * 100)}% acierto) 👏`);
                 stats.score += 15;
                 stats.streak++;
+                if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
                 saveStats();
                 setTimeout(() => nextSpeakItem(), 1800);
             } else {
-                showToast("Casi perfecto. Escucha la voz nativa y prueba otra vez.");
+                showToast(`Dijiste: "${spokenText}". Inténtalo de nuevo escuchando al nativo.`);
             }
+        }
+
+        // Helper fuzzy similarity function (Levenshtein based ratio)
+        function calculateSimilarity(s1, s2) {
+            let longer = s1;
+            let shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            const longerLength = longer.length;
+            if (longerLength === 0) {
+                return 1.0;
+            }
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            let costs = new Array();
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else {
+                        if (j > 0) {
+                            let newValue = costs[j - 1];
+                            if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                            }
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                }
+                if (i > 0) {
+                    costs[s2.length] = lastValue;
+                }
+            }
+            return costs[s2.length];
         }
 
         function speakText(text) {
