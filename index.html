@@ -78,7 +78,7 @@
                 </div>
 
                 <!-- Global Quick Stats Header -->
-                <div class="flex items-center space-x-4 sm:space-x-6">
+                <div class="flex items-center space-x-3 sm:space-x-5">
                     <div class="flex items-center space-x-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-amber-200/60">
                         <i data-lucide="flame" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
                         <span id="streak-counter">0</span>
@@ -90,6 +90,11 @@
                         <span id="score-counter">0</span>
                         <span class="hidden sm:inline text-french-600/80 font-normal">pts</span>
                     </div>
+
+                    <button onclick="confirmResetGameSession()" class="flex items-center space-x-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border border-slate-200 transition-all" title="Reiniciar sesión / partida">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Reiniciar</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -170,16 +175,24 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex items-center space-x-3 pt-4">
-                            <button type="button" onclick="skipWriteItem()" class="px-5 py-3 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium text-sm transition-all flex items-center space-x-1">
-                                <span>Saltar</span>
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </button>
-                            <button type="submit" id="write-submit-btn" class="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-french-600 to-indigo-600 hover:from-french-700 hover:to-indigo-700 text-white font-semibold text-base shadow-lg shadow-french-200 transition-all transform active:scale-[0.99] flex items-center justify-center space-x-2">
-                                <span>Comprobar</span>
-                                <i data-lucide="check" class="w-5 h-5"></i>
-                            </button>
-                        </div>
+                    <div class="flex items-center space-x-3 pt-4">
+                        <button type="button" onclick="skipWriteItem()" class="px-5 py-3 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium text-sm transition-all flex items-center space-x-1">
+                            <span>Saltar</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                        <button type="submit" id="write-submit-btn" class="flex-1 py-3.5 px-6 rounded-xl bg-gradient-to-r from-french-600 to-indigo-600 hover:from-french-700 hover:to-indigo-700 text-white font-semibold text-base shadow-lg shadow-french-200 transition-all transform active:scale-[0.99] flex items-center justify-center space-x-2">
+                            <span>Comprobar</span>
+                            <i data-lucide="check" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Session End / Restart Banner inside Write tab -->
+                <div class="mt-6 text-center">
+                    <button onclick="confirmResetGameSession()" class="text-xs text-slate-400 hover:text-rose-500 underline transition-colors">
+                        ¿Reiniciar puntos, racha y estadísticas de la partida actual?
+                    </button>
+                </div>
                     </form>
 
                     <!-- Feedback Banner -->
@@ -1646,6 +1659,16 @@
             if (accEl) accEl.textContent = `${accuracy}%`;
             if (maxStrEl) maxStrEl.textContent = stats.maxStreak;
         }
+
+        window.confirmResetGameSession = function() {
+            if (window.confirm("¿Estás seguro de que deseas reiniciar la partida actual? Se pondrán a cero tus puntos, racha y estadísticas de ejercicio.")) {
+                stats = { streak: 0, score: 0, totalAnswers: 0, correctAnswers: 0, maxStreak: 0 };
+                saveStats();
+                showToast("¡Partida reiniciada con éxito!");
+                nextWriteItem();
+                nextSpeakItem();
+            }
+        };
 
         function showToast(message) {
             const toast = document.getElementById('toast');
