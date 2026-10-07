@@ -219,7 +219,7 @@
 
                         <button onclick="listenNativeSpeak()" class="inline-flex items-center space-x-2 px-4 py-2 bg-white hover:bg-french-50 text-french-700 text-sm font-semibold rounded-full border border-french-200 shadow-sm transition-all transform hover:scale-105 active:scale-95">
                             <i data-lucide="volume-2" class="w-4 h-4 text-french-600"></i>
-                            <span>Escuchar Nativo</span>
+                            <span>Escuchar Nativo (HD)</span>
                         </button>
                     </div>
 
@@ -573,12 +573,14 @@
         let isListening = false;
         let pendingImportVerbs = [];
         let selectedTenseFilter = 'all'; // 'all' or specific tense string
+        let frenchVoice = null;
 
         // Initialization on window load
         window.onload = function() {
             loadUserData();
             setupAccentBar();
             setupSpeechRecognition();
+            initSpeechSynthesisVoices();
             populateTenseDropdowns();
             renderVerbList();
             updateStatsUI();
@@ -588,6 +590,21 @@
                 lucide.createIcons();
             }
         };
+
+        function initSpeechSynthesisVoices() {
+            if ('speechSynthesis' in window) {
+                const updateVoices = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    // Prefer native fr-FR voices
+                    frenchVoice = voices.find(v => v.lang === 'fr-FR' && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Amélie') || v.name.includes('Thomas'))) 
+                               || voices.find(v => v.lang.startsWith('fr'));
+                };
+                updateVoices();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = updateVoices;
+                }
+            }
+        }
 
         function loadUserData() {
             const savedVerbs = localStorage.getItem('french_verbs_data');
@@ -623,7 +640,6 @@
         }
 
         function populateTenseDropdowns() {
-            // Gather all available tenses across all verbs
             const tensesSet = new Set();
             verbs.forEach(v => {
                 if (v.conjugations) {
@@ -659,7 +675,6 @@
             }
         };
 
-        // Global switchTab function attached to window explicitly
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active', 'text-french-600', 'bg-french-50', 'border', 'border-french-100', 'shadow-sm');
@@ -734,7 +749,6 @@
             }
             if (feedbackEl) feedbackEl.classList.add('hidden');
 
-            // Filter verbs matching chosen tense if specified
             let validCandidates = [];
             verbs.forEach(v => {
                 if (selectedTenseFilter === 'Infinitif') {
@@ -749,7 +763,6 @@
                         });
                     }
                 } else {
-                    // Specific tense requested
                     if (v.conjugations && v.conjugations[selectedTenseFilter]) {
                         Object.keys(v.conjugations[selectedTenseFilter]).forEach(p => {
                             validCandidates.push({ verb: v, tense: selectedTenseFilter, pronoun: p, target: `${p} ${v.conjugations[selectedTenseFilter][p]}` });
@@ -868,7 +881,7 @@
                 speechRecognition = new SpeechRecognition();
                 speechRecognition.lang = 'fr-FR';
                 speechRecognition.continuous = false;
-                speechRecognition.interimResults = false;
+                speechRecognition.interimResults = true; // Enabled interim results for responsive feedback
 
                 speechRecognition.onstart = () => {
                     isListening = true;
@@ -878,17 +891,21 @@
                 };
 
                 speechRecognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
                     const resEl = document.getElementById('speech-recognized-text');
                     if (resEl) resEl.textContent = `"${transcript}"`;
-                    evaluatePronunciation(transcript);
+
+                    if (event.results[event.results.length - 1].isFinal) {
+                        evaluatePronunciation(transcript.trim());
+                    }
                 };
 
                 speechRecognition.onerror = (event) => {
-                    showToast('No pudimos reconocer el audio con claridad. Inténtalo de nuevo.');
+                    showToast('No se pudo capturar el audio con claridad. Inténtalo de nuevo.');
                     updateMicUI(false);
-                    const resEl = document.getElementById('speech-recognized-text');
-                    if (resEl) resEl.textContent = '"(No se detectó voz clara)"';
                     const actionsRow = document.getElementById('speak-actions-row');
                     if (actionsRow) actionsRow.classList.remove('hidden');
                 };
@@ -897,15 +914,12 @@
                     isListening = false;
                     updateMicUI(false);
                 };
-            } else {
-                const micBtn = document.getElementById('mic-button');
-                if (micBtn) micBtn.title = "El reconocimiento de voz no está soportado en este navegador.";
             }
         }
 
         window.toggleSpeechRecognition = function() {
             if (!speechRecognition) {
-                showToast('Tu navegador (como Firefox o dispositivos sin soporte de micrófono seguro) no soporta SpeechRecognition. Usa Chrome o Edge.');
+                showToast('Tu navegador no soporta SpeechRecognition. Usa Google Chrome o Microsoft Edge.');
                 const actionsRow = document.getElementById('speak-actions-row');
                 if (actionsRow) actionsRow.classList.remove('hidden');
                 return;
@@ -921,7 +935,7 @@
                         speechRecognition.stop();
                         speechRecognition.start();
                     } catch(err) {
-                        showToast('Error al iniciar el micrófono. Comprueba permisos.');
+                        showToast('Error al activar el micrófono.');
                     }
                 }
             }
@@ -934,7 +948,7 @@
 
             if (listening) {
                 btn.classList.add('mic-pulse');
-                status.textContent = "Escuchando... ¡Habla ahora en francés!";
+                status.textContent = "Escuchando... ¡Habla ahora con claridad!";
                 status.className = 'text-sm font-semibold text-roseish-500 mt-4 animate-pulse';
             } else {
                 btn.classList.remove('mic-pulse');
@@ -1019,8 +1033,8 @@
             const isExactMatch = targetClean === spokenClean;
             const isSubstring = spokenClean.includes(targetClean) || targetClean.includes(spokenClean);
             
-            // Require at least 70% similarity or valid inclusion
-            const isSuccess = isExactMatch || isSubstring || similarity >= 0.70;
+            // Stricter threshold (>= 82% similarity required for automated success)
+            const isSuccess = isExactMatch || (isSubstring && similarity >= 0.75) || similarity >= 0.82;
 
             const badgeEl = document.getElementById('speech-feedback-badge');
             const boxEl = document.getElementById('speak-result-box');
@@ -1029,7 +1043,7 @@
             if (badgeEl) {
                 badgeEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
                 if (isSuccess) {
-                    badgeEl.textContent = `¡Excelente pronunciación! (${Math.round(similarity * 100)}% coincidencia)`;
+                    badgeEl.textContent = `¡Pronunciación excelente! (${Math.round(similarity * 100)}% coincidencia)`;
                     badgeEl.classList.add('bg-emerald-100', 'text-emerald-800');
                     if (boxEl) {
                         boxEl.classList.add('bg-emerald-50/50', 'border-emerald-200');
@@ -1046,7 +1060,7 @@
                         nextSpeakItem();
                     }, 2200);
                 } else {
-                    badgeEl.textContent = `Pronunciación imprecisa (${Math.round(similarity * 100)}%). Lo esperado era: "${targetRaw}"`;
+                    badgeEl.textContent = `Necesita mejora (${Math.round(similarity * 100)}%). Lo correcto es: "${targetRaw}"`;
                     badgeEl.classList.add('bg-rose-100', 'text-rose-800');
                     if (boxEl) {
                         boxEl.classList.add('bg-rose-50/50', 'border-rose-200');
@@ -1071,12 +1085,11 @@
                 showToast('¡Registrado como correcto!');
                 nextSpeakItem();
             } else {
-                showToast('Escucha al nativo e inténtalo otra vez.');
+                showToast('Escucha la pronunciación nativa y reinténtalo.');
                 listenNativeSpeak();
             }
         };
 
-        // Helper fuzzy similarity function (Levenshtein based ratio)
         function calculateSimilarity(s1, s2) {
             let longer = s1;
             let shorter = s2;
@@ -1085,9 +1098,7 @@
                 shorter = s1;
             }
             const longerLength = longer.length;
-            if (longerLength === 0) {
-                return 1.0;
-            }
+            if (longerLength === 0) return 1.0;
             return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
         }
 
@@ -1123,7 +1134,13 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'fr-FR';
-                utterance.rate = 0.9;
+                utterance.rate = 0.85; // Slightly slower for optimal learning clarity
+                utterance.pitch = 1.0;
+                
+                if (frenchVoice) {
+                    utterance.voice = frenchVoice;
+                }
+
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -1277,7 +1294,6 @@
             showToast('Verbos de ejemplo cargados.');
         };
 
-        // File Import and Export handlers
         window.handleDragOver = function(e) {
             e.preventDefault();
             const zone = document.getElementById('drop-zone');
