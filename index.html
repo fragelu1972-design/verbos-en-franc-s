@@ -595,7 +595,6 @@
             if ('speechSynthesis' in window) {
                 const updateVoices = () => {
                     const voices = window.speechSynthesis.getVoices();
-                    // Prefer native fr-FR voices
                     frenchVoice = voices.find(v => v.lang === 'fr-FR' && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Amélie') || v.name.includes('Thomas'))) 
                                || voices.find(v => v.lang.startsWith('fr'));
                 };
@@ -611,7 +610,16 @@
             const savedStats = localStorage.getItem('french_verbs_stats');
 
             if (savedVerbs) {
-                try { verbs = JSON.parse(savedVerbs); } catch (e) { verbs = [...DEFAULT_VERBS]; }
+                try { 
+                    const parsed = JSON.parse(savedVerbs);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        verbs = parsed;
+                    } else {
+                        verbs = [...DEFAULT_VERBS];
+                    }
+                } catch (e) { 
+                    verbs = [...DEFAULT_VERBS]; 
+                }
             } else {
                 verbs = [...DEFAULT_VERBS];
             }
@@ -623,14 +631,20 @@
         }
 
         function saveVerbs() {
-            localStorage.setItem('french_verbs_data', JSON.stringify(verbs));
+            try {
+                localStorage.setItem('french_verbs_data', JSON.stringify(verbs));
+            } catch (e) {
+                console.error("Error saving to localStorage", e);
+            }
             updateVerbBadge();
             populateTenseDropdowns();
             renderVerbList();
         }
 
         function saveStats() {
-            localStorage.setItem('french_verbs_stats', JSON.stringify(stats));
+            try {
+                localStorage.setItem('french_verbs_stats', JSON.stringify(stats));
+            } catch (e) {}
             updateStatsUI();
         }
 
@@ -1201,11 +1215,14 @@
         window.handleSaveVerb = function(e) {
             e.preventDefault();
             const idInput = document.getElementById('verb-id').value;
-            const french = document.getElementById('input-french').value.trim();
+            const french = document.getElementById('input-french').value.trim().toLowerCase();
             const spanish = document.getElementById('input-spanish').value.trim();
             const conjRaw = document.getElementById('input-conjugations').value.trim();
 
-            const parsedConjugations = parseConjugationsText(conjRaw);
+            let parsedConjugations = parseConjugationsText(conjRaw);
+            if (Object.keys(parsedConjugations).length === 0 && french) {
+                parsedConjugations = generateAutomaticConjugations(french);
+            }
 
             if (idInput) {
                 const index = verbs.findIndex(v => v.id === idInput);
@@ -1221,12 +1238,88 @@
                     conjugations: parsedConjugations
                 };
                 verbs.push(newVerb);
-                showToast('Nuevo verbo añadido a tu lista.');
+                showToast('Nuevo verbo añadido con conjugaciones automáticas.');
             }
 
             saveVerbs();
             resetVerbForm();
         };
+
+        function generateAutomaticConjugations(verb) {
+            const v = verb.toLowerCase().trim();
+            let result = {};
+
+            // 1st group -er verbs (regular, e.g. parler, aimer, manger)
+            if (v.endsWith('er') && v !== 'aller') {
+                const stem = v.slice(0, -2);
+                result['Présent'] = {
+                    'je': stem + 'e',
+                    'tu': stem + 'es',
+                    'il/elle': stem + 'e',
+                    'nous': stem + (stem.endsWith('g') ? 'eons' : 'ons'),
+                    'vous': stem + 'ez',
+                    'ils/elles': stem + 'ent'
+                };
+                result['Imparfait'] = {
+                    'je': stem + 'ais',
+                    'tu': stem + 'ais',
+                    'il/elle': stem + 'ait',
+                    'nous': stem + 'ions',
+                    'vous': stem + 'iez',
+                    'ils/elles': stem + 'aient'
+                };
+                result['Futur Simple'] = {
+                    'je': v + 'ai',
+                    'tu': v + 'as',
+                    'il/elle': v + 'a',
+                    'nous': v + 'ons',
+                    'vous': v + 'ez',
+                    'ils/elles': v + 'ont'
+                };
+            } 
+            // 2nd group -ir regular verbs (e.g. finir, choisir)
+            else if (v.endsWith('ir') && !['venir', 'tenir', 'mourir', 'courir', 'sortir', 'partir', 'venir'].includes(v)) {
+                const stem = v.slice(0, -2);
+                result['Présent'] = {
+                    'je': stem + 'is',
+                    'tu': stem + 'is',
+                    'il/elle': stem + 'it',
+                    'nous': stem + 'issons',
+                    'vous': stem + 'issez',
+                    'ils/elles': stem + 'issent'
+                };
+                result['Futur Simple'] = {
+                    'je': v + 'ai',
+                    'tu': v + 'as',
+                    'il/elle': v + 'a',
+                    'nous': v + 'ons',
+                    'vous': v + 'ez',
+                    'ils/elles': v + 'ont'
+                };
+            } 
+            // Fallback generic pattern for any other French verb
+            else {
+                const stem = v.endsWith('re') ? v.slice(0, -2) : v.slice(0, -3);
+                result['Présent'] = {
+                    'je': stem + 's',
+                    'tu': stem + 's',
+                    'il/elle': stem + 't',
+                    'nous': stem + 'ons',
+                    'vous': stem + 'ez',
+                    'ils/elles': stem + 'ent'
+                };
+                result['Futur Simple'] = {
+                    'je': v + 'ai',
+                    'tu': v + 'as',
+                    'il/elle': v + 'a',
+                    'nous': v + 'ons',
+                    'vous': v + 'ez',
+                    'ils/elles': v + 'ont'
+                };
+            }
+
+            return result;
+        }
 
         function parseConjugationsText(text) {
             if (!text) return {};
@@ -1265,14 +1358,19 @@
             document.getElementById('input-spanish').value = verb.spanish;
             
             let conjText = '';
-            for (const [tense, group] of Object.entries(verb.conjugations || {})) {
-                const pairs = Object.entries(group).map(([p, c]) => `${p}=${c}`).join(', ');
-                conjText += `${tense}: ${pairs}\n`;
+            if (verb.conjugations) {
+                for (const [tense, group] of Object.entries(verb.conjugations)) {
+                    const pairs = Object.entries(group).map(([p, c]) => `${p}=${c}`).join(', ');
+                    conjText += `${tense}: ${pairs}\n`;
+                }
             }
             document.getElementById('input-conjugations').value = conjText.trim();
 
             document.getElementById('form-title').textContent = "Editar Verbo";
             document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            // Scroll smoothly to the form on mobile/desktop
+            document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
         };
 
         window.resetVerbForm = function() {
